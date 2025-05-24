@@ -4,7 +4,6 @@ use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::thread;
 
 pub struct HttpPropagator {
-    // config: PropagatorConfig,
     sender: SyncSender<MessageType>,
 }
 

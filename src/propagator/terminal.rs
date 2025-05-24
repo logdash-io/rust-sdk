@@ -3,6 +3,7 @@ use crate::{log::LogMessage, metric::MetricMessage};
 use owo_colors::OwoColorize;
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::thread;
+
 pub struct TerminalPropagator {
     sender: SyncSender<MessageType>,
 }
