@@ -53,13 +53,8 @@ jobs:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
       # Check fmt
-      - name: "rustfmt --check"
-        # Workaround for rust-lang/cargo#7732
-        run: |
-          if ! rustfmt --check $(git ls-files '*.rs'); then
-            printf "Please run \`rustfmt \$(git ls-files '*.rs')\` to fix rustfmt errors.\nSee CONTRIBUTING.md for more details.\n" >&2
-            exit 1
-          fi
+      - name: "cargo fmt"
+        run: cargo fmt --all -- --check
 
   clippy:
     name: clippy
