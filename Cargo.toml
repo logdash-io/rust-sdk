@@ -1,0 +1,20 @@
+[package]
+name = "logdash"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+owo-colors = { version = "4.2.1" }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+time = { version = "0.3.41", features = ["formatting", "serde"] }
+ureq = { version = "3.0.11", default-features = false, features = [
+    "json",
+    "gzip",
+] }
+
+[features]
+default = ["rustls"]
+rustls = ["ureq/rustls"]
+native-tls = ["ureq/native-tls"]
