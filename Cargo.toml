@@ -3,6 +3,7 @@ name = "logdash"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+authors = ["firesz25 <olek.cz@outlook.com>"]
 
 [dependencies]
 owo-colors = { version = "4.2.1" }
