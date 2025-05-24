@@ -43,7 +43,7 @@ impl TerminalPropagator {
                             println!(
                                 "{} [{}] {}",
                                 "Info:".truecolor(21, 93, 252),
-                                log.created_at.to_utc(),
+                                log.created_at,
                                 log.message
                             )
                         }
@@ -67,7 +67,7 @@ impl TerminalPropagator {
                             println!(
                                 "{} [{}] {}",
                                 "Debug:".truecolor(0, 166, 62),
-                                log.created_at.to_utc(),
+                                log.created_at,
                                 log.message
                             )
                         }
