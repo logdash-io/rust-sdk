@@ -1,24 +1,20 @@
-use super::{MessageType, Propagator, PropagatorConfig};
-use crate::{log::LogMessage, metric::MetricMessage};
+use super::{
+    MessageType, PropagatorConfig,
+    worker::{Worker, WorkerJob},
+};
 use owo_colors::OwoColorize;
-use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
-use std::thread;
+use std::sync::mpsc::Receiver;
 
 pub struct TerminalPropagator {
-    sender: SyncSender<MessageType>,
+    _priv: (),
 }
 
-impl TerminalPropagator {
-    pub fn new(config: PropagatorConfig) -> Self {
-        let (tx, rx) = sync_channel(30);
-        thread::Builder::new()
-            .name("logdash-propagator".into())
-            .spawn(move || Self::thread_fn(config, rx))
-            .unwrap();
-        Self { sender: tx }
-    }
+pub fn terminal(cfg: PropagatorConfig) -> Worker<TerminalPropagator> {
+    Worker::<TerminalPropagator>::new(cfg)
+}
 
-    fn thread_fn(_cfg: PropagatorConfig, rx: Receiver<MessageType>) {
+impl WorkerJob for TerminalPropagator {
+    fn job(_cfg: PropagatorConfig, rx: Receiver<MessageType>) {
         loop {
             match rx.recv() {
                 Ok(msg) => match msg {
@@ -93,15 +89,5 @@ impl TerminalPropagator {
                 }
             }
         }
-    }
-}
-
-impl Propagator for TerminalPropagator {
-    fn propagate_log(&self, msg: LogMessage) {
-        self.sender.send(MessageType::Log(msg)).unwrap();
-    }
-
-    fn propagate_metric(&self, msg: MetricMessage) {
-        self.sender.send(MessageType::Metric(msg)).unwrap();
     }
 }

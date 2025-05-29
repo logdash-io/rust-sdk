@@ -1,9 +1,11 @@
 pub mod http;
 pub mod terminal;
+mod worker;
 use std::sync::Arc;
 
 use crate::{log::LogMessage, metric::MetricMessage};
-
+pub use http::http;
+pub use terminal::terminal;
 #[derive(Debug, Clone)]
 pub struct PropagatorConfig {
     pub(crate) api_key: Option<String>,

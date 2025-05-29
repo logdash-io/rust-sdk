@@ -10,11 +10,10 @@ use std::sync::Arc;
 
 pub fn create_logdash(cfg: Config) -> (LogCollector, MetricCollector) {
     if cfg.local() {
-        let propagator: Arc<dyn Propagator> =
-            Arc::new(propagator::terminal::TerminalPropagator::new(cfg));
+        let propagator: Arc<dyn Propagator> = Arc::new(propagator::terminal(cfg));
         dispatch::init_dispatch(propagator);
     } else {
-        let propagator: Arc<dyn Propagator> = Arc::new(propagator::http::HttpPropagator::new(cfg));
+        let propagator: Arc<dyn Propagator> = Arc::new(propagator::http(cfg));
         dispatch::init_dispatch(propagator);
     }
     (LogCollector::new(), MetricCollector::new())

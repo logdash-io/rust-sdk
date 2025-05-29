@@ -1,23 +1,18 @@
-use super::{MessageType, Propagator, PropagatorConfig};
-use crate::{log::LogMessage, metric::MetricMessage};
-use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
-use std::thread;
-
+use super::{
+    MessageType, PropagatorConfig,
+    worker::{Worker, WorkerJob},
+};
+use std::sync::mpsc::Receiver;
 pub struct HttpPropagator {
-    sender: SyncSender<MessageType>,
+    _priv: (),
 }
 
-impl HttpPropagator {
-    pub fn new(config: PropagatorConfig) -> Self {
-        let (tx, rx) = sync_channel(30);
-        thread::Builder::new()
-            .name("logdash-propagator".into())
-            .spawn(move || Self::thread_fn(config, rx))
-            .unwrap();
-        Self { sender: tx }
-    }
+pub fn http(cfg: PropagatorConfig) -> Worker<HttpPropagator> {
+    Worker::<HttpPropagator>::new(cfg)
+}
 
-    fn thread_fn(cfg: PropagatorConfig, rx: Receiver<MessageType>) {
+impl WorkerJob for HttpPropagator {
+    fn job(cfg: PropagatorConfig, rx: Receiver<MessageType>) {
         let log_url = format!("{}/logs", cfg.api_url);
         let metric_url = format!("{}/metrics", cfg.api_url);
         let api_key = cfg.api_key.unwrap();
@@ -46,15 +41,5 @@ impl HttpPropagator {
                 }
             }
         }
-    }
-}
-
-impl Propagator for HttpPropagator {
-    fn propagate_log(&self, msg: LogMessage) {
-        self.sender.send(MessageType::Log(msg)).unwrap();
-    }
-
-    fn propagate_metric(&self, msg: MetricMessage) {
-        self.sender.send(MessageType::Metric(msg)).unwrap();
     }
 }
