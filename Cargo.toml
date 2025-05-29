@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 authors = ["firesz25 <olek.cz@outlook.com>"]
+readme = "README.md"
+repository = "https://github.com/logdash-io/rust-sdk"
+homepage = "https://github.com/logdash-io/rust-sdk"
+description = "Logdash.io simple client"
 
 [dependencies]
 owo-colors = { version = "4.2.1" }

@@ -1,9 +1,12 @@
 fn main() {
     // Create a new Logdash client with default configuration
-    let (_l, _m) = logdash::create_logdash(logdash::Config::default().verbose(true));
+    let (l, m) = logdash::create_logdash(logdash::Config::default());
 
     // Send an info log message
-    _l.info("Rust SDK example");
+    l.info("Rust SDK example");
+
+    // Send a metric message
+    m.set("user".into(), 0.0);
 
     // Sleep for 10 seconds to allow the log message to be sent
     // This is just for demonstration purposes
