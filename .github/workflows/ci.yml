@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build-all:
-    name: build all toolchains and OSes
+    name: build all toolchain and OS
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust ${{ env.rust_stable }}
+      - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
