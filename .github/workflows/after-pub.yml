@@ -1,0 +1,51 @@
+name: Check deployed package
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Release-plz"]
+    types:
+      - completed
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  run-after-pub:
+    name: Run LogDash Demo
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Wait for crates.io to update
+        run: sleep 60
+      - name: Create temp project and test
+        env:
+          LOGDASH_API_KEY: ${{ secrets.LOGDASH_API_KEY }}
+        run: |
+          cargo new temp-test
+          cd temp-test
+          cargo add logdash
+          echo 'fn main() {                                                                                                                   rs    18:39
+              // Create a new Logdash client with default configuration
+              let (l, m) = logdash::create_logdash(logdash::Config::default());
+
+              // Send an info log message
+              l.info("Rust SDK example");
+
+              // Send a metric message
+              m.set("user".into(), 0.0);
+
+              // Sleep for 10 seconds to allow the log message to be sent
+              // This is just for demonstration purposes
+              // In a real application, you would not want to sleep the thread like this
+              std::thread::sleep(std::time::Duration::from_secs(10));
+          }' > src/main.rs
+          cargo run
+          cargo test
