@@ -15,7 +15,7 @@ env:
 
 jobs:
   run-after-pub:
-    name: Run LogDash Demo
+    name: Run LogDash after publish check
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
