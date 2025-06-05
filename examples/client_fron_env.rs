@@ -3,13 +3,13 @@ fn main() {
     let (l, m) = logdash::create_logdash(logdash::Config::default().verbose(true));
 
     // Send an info log message
-    l.info("Rust SDK example");
-    l.warn("elo");
-    l.error("elo");
-    l.debug("elo");
-    l.silly("elo");
-    l.http("elo");
-    l.verbose("elo");
+    l.info("info");
+    l.warn("warn");
+    l.error("error");
+    l.debug("debug");
+    l.silly("silly");
+    l.http("http");
+    l.verbose("verbose");
 
     // Send a metric message
     m.set("user".into(), 0.0);
