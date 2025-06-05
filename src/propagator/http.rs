@@ -27,7 +27,7 @@ impl WorkerJob for HttpPropagator {
                             .send_json(&log)
                             .unwrap();
                         if cfg.verbose {
-                            println!("Log sent: {} {}", log.level, log.message);
+                            println!("Log send: {} {}", log.level, log.message);
                         }
                     }
                     MessageType::Metric(metric) => {
