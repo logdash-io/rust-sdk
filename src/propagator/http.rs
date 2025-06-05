@@ -1,3 +1,5 @@
+use crate::metric::MetricOperation;
+
 use super::{
     MessageType, PropagatorConfig,
     worker::{Worker, WorkerJob},
@@ -22,17 +24,28 @@ impl WorkerJob for HttpPropagator {
                     MessageType::Log(log) => {
                         ureq::post(&log_url)
                             .header("project-api-key", &api_key)
-                            .send_json(log)
+                            .send_json(&log)
                             .unwrap();
                         if cfg.verbose {
-                            println!("Log sent",);
+                            println!("Log sent: {} {}", log.level, log.message);
                         }
                     }
                     MessageType::Metric(metric) => {
                         ureq::put(&metric_url)
                             .header("project-api-key", &api_key)
-                            .send_json(metric)
+                            .send_json(&metric)
                             .unwrap();
+                        if cfg.verbose {
+                            match metric.operation.clone() {
+                                MetricOperation::Set => {
+                                    println!("Metric set: {} = {}", metric.name, metric.value);
+                                }
+
+                                MetricOperation::Change => {
+                                    println!("Metric changed: {} = {}", metric.name, metric.value);
+                                }
+                            }
+                        }
                     }
                 },
                 Err(e) => {

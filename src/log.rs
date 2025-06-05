@@ -1,5 +1,6 @@
 use crate::dispatch::DISPATCH;
 use serde::Serialize;
+use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use time::OffsetDateTime;
 
@@ -102,6 +103,20 @@ pub enum LogLevel {
     Verbose,
     Debug,
     Silly,
+}
+
+impl fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LogLevel::Error => write!(f, "error"),
+            LogLevel::Warn => write!(f, "warn"),
+            LogLevel::Info => write!(f, "info"),
+            LogLevel::Http => write!(f, "http"),
+            LogLevel::Verbose => write!(f, "verbose"),
+            LogLevel::Debug => write!(f, "debug"),
+            LogLevel::Silly => write!(f, "silly"),
+        }
+    }
 }
 
 pub trait IntoLog {
