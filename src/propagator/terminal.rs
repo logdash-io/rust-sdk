@@ -27,10 +27,10 @@ impl WorkerJob for TerminalPropagator {
                                 log.message
                             )
                         }
-                        crate::log::LogLevel::Warn => {
+                        crate::log::LogLevel::Warning => {
                             println!(
                                 "{} [{}] {}",
-                                "Warn:".truecolor(254, 154, 0),
+                                "Warning:".truecolor(254, 154, 0),
                                 log.created_at,
                                 log.message
                             )

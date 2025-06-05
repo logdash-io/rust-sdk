@@ -32,7 +32,7 @@ jobs:
           cargo new temp-test
           cd temp-test
           cargo add logdash
-          echo 'fn main() {                                                                                                                   rs    18:39
+          echo 'fn main() {
               // Create a new Logdash client with default configuration
               let (l, m) = logdash::create_logdash(logdash::Config::default());
 

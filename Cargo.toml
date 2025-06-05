@@ -1,6 +1,6 @@
 [package]
 name = "logdash"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 license = "MIT"
 authors = ["firesz25 <olek.cz@outlook.com>"]
@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/logdash-io/rust-sdk"
 homepage = "https://github.com/logdash-io/rust-sdk"
 description = "Logdash.io simple client"
+categories = ["API-bindings"]
+keywords = ["api", "sdk", "metrics", "logging", "logdash"]
 
 [dependencies]
 owo-colors = { version = "4.2.1" }
