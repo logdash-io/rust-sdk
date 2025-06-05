@@ -1,6 +1,6 @@
 fn main() {
     // Create a new Logdash client with default configuration
-    let (l, m) = logdash::create_logdash(logdash::Config::default());
+    let (l, m) = logdash::create_logdash(logdash::Config::default().verbose(true));
 
     // Send an info log message
     l.info("Rust SDK example");
