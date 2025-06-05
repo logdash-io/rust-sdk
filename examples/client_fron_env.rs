@@ -4,6 +4,12 @@ fn main() {
 
     // Send an info log message
     l.info("Rust SDK example");
+    l.warn("elo");
+    l.error("elo");
+    l.debug("elo");
+    l.silly("elo");
+    l.http("elo");
+    l.verbose("elo");
 
     // Send a metric message
     m.set("user".into(), 0.0);

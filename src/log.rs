@@ -30,7 +30,7 @@ impl LogCollector {
 
     pub fn warn(&self, message: impl IntoLog) {
         self.send(LogMessage {
-            level: LogLevel::Warn,
+            level: LogLevel::Warning,
             message: message.into_log(),
             created_at: OffsetDateTime::now_utc(),
             sequence_number: self.sequence_number.fetch_add(1, Ordering::SeqCst),
@@ -97,7 +97,7 @@ pub struct LogMessage {
 #[serde(rename_all = "camelCase")]
 pub enum LogLevel {
     Error,
-    Warn,
+    Warning,
     Info,
     Http,
     Verbose,
@@ -109,7 +109,7 @@ impl fmt::Display for LogLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             LogLevel::Error => write!(f, "error"),
-            LogLevel::Warn => write!(f, "warn"),
+            LogLevel::Warning => write!(f, "warning"),
             LogLevel::Info => write!(f, "info"),
             LogLevel::Http => write!(f, "http"),
             LogLevel::Verbose => write!(f, "verbose"),
