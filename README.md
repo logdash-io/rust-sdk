@@ -25,7 +25,7 @@ logger.info("Rust SDK example");
 
 get API KEY from config
 ```rust
-let (l, m) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
+let (l, _) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
 
 // Send an info log message
 l.info("Rust SDK example with API key");
@@ -42,6 +42,17 @@ metrics.set("user".into(), 0.0)
 // update the metric
 metrics.mutate("user".into(), 1.0)
 ```
+
+get API KEY from config
+```rust
+let (_, m) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
+
+// create a metric
+m.set("user".into(), 0.0)
+// update the metric
+m.mutate("user".into(), 1.0)
+```
+
 
 ## View
 
