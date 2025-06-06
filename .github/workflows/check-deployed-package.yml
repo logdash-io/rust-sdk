@@ -19,6 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Wait for package to propagate
+        run: sleep 300
+
       - name: Make run script executable
         run: chmod +x check-deployed-package/run.sh
 
