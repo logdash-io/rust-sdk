@@ -22,6 +22,19 @@ jobs:
           fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+      - name: Sync Cargo.lock
+        run: cargo check
+      - name: Commit Cargo.lock if changed
+        run: |
+          if git diff --quiet Cargo.lock; then
+            echo "Cargo.lock is already up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add Cargo.lock
+            git commit -m "chore: update Cargo.lock"
+            git push
+          fi
       - name: Run release-plz
         uses: release-plz/action@v0.5
         with:
