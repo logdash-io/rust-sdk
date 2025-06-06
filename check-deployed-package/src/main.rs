@@ -36,5 +36,5 @@ fn main() {
     metrics.mutate("users".to_string(), 1.0);
 
     // Wait to ensure data is sent
-    thread::sleep(Duration::from_secs(2));
+    thread::sleep(Duration::from_secs(5));
 } 
