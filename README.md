@@ -15,6 +15,7 @@ cargo add logdash
 ## Logging
 
 get API KEY from env LOGDASH_API_KEY
+
 ```rust
 
 let (logger, _) = logdash::create_logdash(logdash::Config::default());
@@ -24,13 +25,13 @@ logger.info("Rust SDK example");
 ```
 
 get API KEY from config
+
 ```rust
 let (l, _) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
 
 // Send an info log message
 l.info("Rust SDK example with API key");
 ```
-
 
 ## Metrics
 
@@ -39,20 +40,22 @@ let (_, metrics) = logdash::create_logdash(logdash::Config::default());
 
 // create a metric
 metrics.set("user".into(), 0.0)
-// update the metric
+
+// or increment / decrement by
 metrics.mutate("user".into(), 1.0)
 ```
 
 get API KEY from config
+
 ```rust
 let (_, m) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
 
 // create a metric
 m.set("user".into(), 0.0)
-// update the metric
+
+// or increment / decrement by
 m.mutate("user".into(), 1.0)
 ```
-
 
 ## View
 
