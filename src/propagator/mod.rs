@@ -1,7 +1,7 @@
 pub mod http;
 pub mod terminal;
 mod worker;
-use std::sync::Arc;
+use std::sync::{Arc, mpsc::Sender};
 
 use crate::{event::EventMessage, log::LogMessage, metric::MetricMessage};
 pub use http::http;
@@ -71,12 +71,15 @@ pub enum MessageType {
     Log(LogMessage),
     Metric(MetricMessage),
     Event(EventMessage),
+    /// Answered once every message queued before it is sent.
+    Flush(Sender<()>),
 }
 
 pub trait Propagator: Send + Sync + 'static {
     fn propagate_log(&self, msg: LogMessage);
     fn propagate_metric(&self, msg: MetricMessage);
     fn propagate_event(&self, msg: EventMessage);
+    fn flush(&self);
 }
 
 impl Propagator for Arc<dyn Propagator> {
@@ -90,5 +93,9 @@ impl Propagator for Arc<dyn Propagator> {
 
     fn propagate_event(&self, msg: EventMessage) {
         self.as_ref().propagate_event(msg);
+    }
+
+    fn flush(&self) {
+        self.as_ref().flush();
     }
 }

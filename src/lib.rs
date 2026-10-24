@@ -20,3 +20,19 @@ pub fn create_logdash(cfg: Config) -> (LogCollector, MetricCollector) {
     }
     (LogCollector::new(), MetricCollector::new())
 }
+
+/// Waits until the logs, metrics and events queued so far are sent, for example before the app exits.
+///
+/// Each request fails after 5 seconds without an answer, so `flush` returns even when the API is unreachable.
+///
+/// ```no_run
+/// let (logger, _) = logdash::create_logdash(logdash::Config::default());
+///
+/// logger.info("Desktop app closing");
+/// logdash::flush();
+/// ```
+pub fn flush() {
+    if let Some(dispatch) = dispatch::DISPATCH.get() {
+        dispatch.flush();
+    }
+}

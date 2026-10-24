@@ -6,6 +6,12 @@ use super::{
 };
 use serde::Serialize;
 use std::sync::mpsc::Receiver;
+use std::time::Duration;
+use ureq::Agent;
+
+/// A request without an answer by then fails, so a hung connection cannot stall the worker or `flush`.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+
 pub struct HttpPropagator {
     _priv: (),
 }
@@ -25,6 +31,10 @@ pub fn http(cfg: PropagatorConfig) -> Worker<HttpPropagator> {
 
 impl WorkerJob for HttpPropagator {
     fn job(cfg: PropagatorConfig, rx: Receiver<MessageType>) {
+        let agent: Agent = Agent::config_builder()
+            .timeout_global(Some(REQUEST_TIMEOUT))
+            .build()
+            .into();
         let log_url = format!("{}/logs", cfg.api_url);
         let metric_url = format!("{}/metrics", cfg.api_url);
         let event_url = format!("{}/events", cfg.api_url);
@@ -34,7 +44,8 @@ impl WorkerJob for HttpPropagator {
             match rx.recv() {
                 Ok(msg) => match msg {
                     MessageType::Log(log) => {
-                        if let Err(e) = ureq::post(&log_url)
+                        if let Err(e) = agent
+                            .post(&log_url)
                             .header("project-api-key", &api_key)
                             .send_json(Body { msg: &log, app })
                         {
@@ -46,7 +57,8 @@ impl WorkerJob for HttpPropagator {
                         }
                     }
                     MessageType::Metric(metric) => {
-                        if let Err(e) = ureq::put(&metric_url)
+                        if let Err(e) = agent
+                            .put(&metric_url)
                             .header("project-api-key", &api_key)
                             .send_json(Body { msg: &metric, app })
                         {
@@ -66,7 +78,8 @@ impl WorkerJob for HttpPropagator {
                         }
                     }
                     MessageType::Event(event) => {
-                        if let Err(e) = ureq::post(&event_url)
+                        if let Err(e) = agent
+                            .post(&event_url)
                             .header("project-api-key", &api_key)
                             .send_json(Body { msg: &event, app })
                         {
@@ -76,6 +89,9 @@ impl WorkerJob for HttpPropagator {
                         if cfg.verbose {
                             println!("Event sent: {}", event.name);
                         }
+                    }
+                    MessageType::Flush(flushed) => {
+                        let _ = flushed.send(());
                     }
                 },
                 Err(e) => {

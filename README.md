@@ -74,6 +74,18 @@ Pass the user ID for signed-in users, so one person counts once across the websi
 Without it, Logdash counts a visitor of that app that changes every day.
 Never put personal data in props.
 
+## Flush
+
+Logs, metrics and events are sent in the background.
+Call `flush` before your app exits, so nothing queued is lost.
+
+```rust
+// wait until the logs, metrics and events queued so far are sent
+logdash::flush();
+```
+
+Each request fails after 5 seconds without an answer, so `flush` returns even when the API is unreachable.
+
 ## Apps
 
 A domain key is shared by all apps of a domain, for example a desktop app, an API and a landing page.

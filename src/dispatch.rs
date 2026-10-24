@@ -39,4 +39,9 @@ impl Dispatch {
     pub fn dispatch_event(&self, msg: EventMessage) {
         self.propagator.propagate_event(msg);
     }
+
+    #[inline]
+    pub fn flush(&self) {
+        self.propagator.flush();
+    }
 }

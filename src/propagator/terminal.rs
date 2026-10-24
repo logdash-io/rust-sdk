@@ -86,6 +86,9 @@ impl WorkerJob for TerminalPropagator {
                     MessageType::Event(event) => {
                         println!("Event: {} {}", event.name, Value::Object(event.props));
                     }
+                    MessageType::Flush(flushed) => {
+                        let _ = flushed.send(());
+                    }
                 },
                 Err(e) => {
                     eprintln!("Error receiving message: {}", e);
