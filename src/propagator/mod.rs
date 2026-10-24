@@ -1,9 +1,9 @@
 pub mod http;
 pub mod terminal;
 mod worker;
-use std::sync::Arc;
+use std::sync::{Arc, mpsc::Sender};
 
-use crate::{log::LogMessage, metric::MetricMessage};
+use crate::{event::EventMessage, log::LogMessage, metric::MetricMessage};
 pub use http::http;
 pub use terminal::terminal;
 #[derive(Debug, Clone)]
@@ -40,11 +40,11 @@ impl PropagatorConfig {
         self
     }
 
-    /// Names the app that sends the logs and metrics, for example `desktop`, `api` or `landing`.
+    /// Names the app that sends the logs, metrics and events, for example `desktop`, `api` or `landing`.
     ///
     /// A domain key is shared by all apps of a domain, and `app` names this one,
     /// so the dashboard can filter logs and metrics by app.
-    /// Every log and metric sent with this config carries it.
+    /// Every log, metric and event sent with this config carries it.
     /// Older service keys ignore `app`.
     ///
     /// ```no_run
@@ -70,11 +70,16 @@ impl PropagatorConfig {
 pub enum MessageType {
     Log(LogMessage),
     Metric(MetricMessage),
+    Event(EventMessage),
+    /// Answered once every message queued before it is sent.
+    Flush(Sender<()>),
 }
 
 pub trait Propagator: Send + Sync + 'static {
     fn propagate_log(&self, msg: LogMessage);
     fn propagate_metric(&self, msg: MetricMessage);
+    fn propagate_event(&self, msg: EventMessage);
+    fn flush(&self);
 }
 
 impl Propagator for Arc<dyn Propagator> {
@@ -84,5 +89,13 @@ impl Propagator for Arc<dyn Propagator> {
 
     fn propagate_metric(&self, msg: MetricMessage) {
         self.as_ref().propagate_metric(msg);
+    }
+
+    fn propagate_event(&self, msg: EventMessage) {
+        self.as_ref().propagate_event(msg);
+    }
+
+    fn flush(&self) {
+        self.as_ref().flush();
     }
 }

@@ -1,7 +1,7 @@
 use super::{MessageType, Propagator, PropagatorConfig};
 use std::{
     marker::PhantomData,
-    sync::mpsc::{Receiver, SyncSender, sync_channel},
+    sync::mpsc::{Receiver, SyncSender, channel, sync_channel},
 };
 pub trait WorkerJob {
     fn job(cfg: PropagatorConfig, rx: Receiver<MessageType>);
@@ -34,5 +34,18 @@ impl<T: WorkerJob + Send + Sync + 'static> Propagator for Worker<T> {
 
     fn propagate_metric(&self, msg: crate::metric::MetricMessage) {
         let _ = self.sender.send(MessageType::Metric(msg));
+    }
+
+    fn propagate_event(&self, msg: crate::event::EventMessage) {
+        let _ = self.sender.send(MessageType::Event(msg));
+    }
+
+    // The worker sends messages in order, so its answer means everything queued before is sent.
+    // A worker that is gone drops the answer channel, which ends the wait too.
+    fn flush(&self) {
+        let (flushed, answer) = channel();
+        if self.sender.send(MessageType::Flush(flushed)).is_ok() {
+            let _ = answer.recv();
+        }
     }
 }

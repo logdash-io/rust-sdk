@@ -56,6 +56,36 @@ m.set("user".into(), 0.0);
 m.mutate("user".into(), 1.0);
 ```
 
+## Events
+
+```rust
+logdash::create_logdash(logdash::Config::default());
+
+// track that a signed-in user ran an agent
+logdash::track(
+    "agent_run",
+    &[("agent", "support".into()), ("steps", 4.into()), ("success", true.into())],
+    Some(&user.id),
+);
+```
+
+Events show up in the domain's Analytics as goals, with a daily trend.
+Pass the user ID for signed-in users, so one person counts once across the website and apps.
+Without it, Logdash counts a visitor of that app that changes every day.
+Never put personal data in props.
+
+## Flush
+
+Logs, metrics and events are sent in the background.
+Call `flush` before your app exits, so nothing queued is lost.
+
+```rust
+// wait until the logs, metrics and events queued so far are sent
+logdash::flush();
+```
+
+Each request fails after 5 seconds without an answer, so `flush` returns even when the API is unreachable.
+
 ## Apps
 
 A domain key is shared by all apps of a domain, for example a desktop app, an API and a landing page.
@@ -84,12 +114,12 @@ To see the logs or metrics, go to your project dashboard
 
 ## Configuration
 
-| Parameter | Required | Default | Description                                                                                                              |
-| --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `api_key` | no       | -       | Api key used to authorize against logdash servers. If you don't provide one, logs will be logged into local console only |
-| `api_url` | no       | -       | Custom API host, useful with self-hosted instances                                                                       |
-| `verbose` | no       | -       | Useful for debugging purposes                                                                                            |
-| `app`     | no       | -       | Name of the app sending logs and metrics, for example `desktop`. See [Apps](#apps)                                       |
+| Parameter | Required | Default | Description                                                                                                                         |
+| --------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key` | no       | -       | Api key used to authorize against logdash servers. If you don't provide one, logs and events will be logged into local console only |
+| `api_url` | no       | -       | Custom API host, useful with self-hosted instances                                                                                  |
+| `verbose` | no       | -       | Useful for debugging purposes                                                                                                       |
+| `app`     | no       | -       | Name of the app sending logs, metrics and events, for example `desktop`. See [Apps](#apps)                                          |
 
 ## License
 

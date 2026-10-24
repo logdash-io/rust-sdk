@@ -14,8 +14,6 @@ fn main() {
     // Send a metric message
     m.set("user".into(), 0.0);
 
-    // Sleep for 10 seconds to allow the log message to be sent
-    // This is just for demonstration purposes
-    // In a real application, you would not want to sleep the thread like this
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    // Wait until the logs and the metric are sent before the program exits
+    logdash::flush();
 }
