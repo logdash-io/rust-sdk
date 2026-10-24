@@ -26,12 +26,13 @@ impl<T: WorkerJob> Worker<T> {
     }
 }
 
+// Sending fails only when the worker thread is gone: drop the message rather than crash the host app.
 impl<T: WorkerJob + Send + Sync + 'static> Propagator for Worker<T> {
     fn propagate_log(&self, msg: crate::log::LogMessage) {
-        self.sender.send(MessageType::Log(msg)).unwrap();
+        let _ = self.sender.send(MessageType::Log(msg));
     }
 
     fn propagate_metric(&self, msg: crate::metric::MetricMessage) {
-        self.sender.send(MessageType::Metric(msg)).unwrap();
+        let _ = self.sender.send(MessageType::Metric(msg));
     }
 }
