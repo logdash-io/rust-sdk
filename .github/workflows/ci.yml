@@ -2,7 +2,13 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A release in progress must finish; a newer merge waits and releases after it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,7 +25,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: "install Rust Stable"
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -32,7 +38,7 @@ jobs:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -46,7 +52,7 @@ jobs:
     name: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -55,3 +61,70 @@ jobs:
       # Run clippy
       - name: "clippy --all"
         run: cargo clippy --all --tests --no-deps
+
+  # The release scripts.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node --test 'scripts/*.test.ts'
+
+  # The version the merged commits call for; empty when none of them is a feat, fix, perf, or breaking change.
+  version:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the tags and commits since the last release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Two lines, so a failing script fails the step instead of releasing nothing.
+      - id: next
+        run: |
+          version=$(node scripts/version.ts)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  # Publishes the merge to crates.io: users get it on their next cargo update.
+  release:
+    needs: [build-all, fmt, clippy, test, version]
+    if: needs.version.outputs.next != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      V: ${{ needs.version.outputs.next }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false # keep the write token off disk while cargo publish runs build scripts
+      - uses: dtolnay/rust-toolchain@stable
+      # The version in Cargo.toml is a placeholder; the tags are the source of truth.
+      - run: |
+          sed -i '/^\[package\]/,/^\[/s/^version = .*/version = "'"$V"'"/' Cargo.toml
+          grep -qxF "version = \"$V\"" Cargo.toml
+          cargo update --workspace
+      # Dirty: Cargo.toml and Cargo.lock differ from the merge only in the version.
+      # Skipped when already published, so a rerun after a failed tag step just tags.
+      - run: curl -fsS https://index.crates.io/lo/gd/logdash | grep -qF "\"vers\":\"$V\"" || cargo publish --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      # Last, since it creates the tag the next release counts commits from.
+      - run: gh release create "v$V" --generate-notes --target "$GITHUB_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  check-deployed-package:
+    needs: [version, release]
+    uses: ./.github/workflows/check-deployed-package.yml
+    with:
+      version: ${{ needs.version.outputs.next }}
+    secrets:
+      LOGDASH_API_KEY: ${{ secrets.LOGDASH_API_KEY }}
+      LOGDASH_PERSONAL_API_KEY: ${{ secrets.LOGDASH_PERSONAL_API_KEY }}
