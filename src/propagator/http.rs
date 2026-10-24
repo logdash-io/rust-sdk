@@ -33,19 +33,25 @@ impl WorkerJob for HttpPropagator {
             match rx.recv() {
                 Ok(msg) => match msg {
                     MessageType::Log(log) => {
-                        ureq::post(&log_url)
+                        if let Err(e) = ureq::post(&log_url)
                             .header("project-api-key", &api_key)
                             .send_json(Body { msg: &log, app })
-                            .unwrap();
+                        {
+                            eprintln!("Error sending log: {}", e);
+                            continue;
+                        }
                         if cfg.verbose {
                             println!("Log send: {} {}", log.level, log.message);
                         }
                     }
                     MessageType::Metric(metric) => {
-                        ureq::put(&metric_url)
+                        if let Err(e) = ureq::put(&metric_url)
                             .header("project-api-key", &api_key)
                             .send_json(Body { msg: &metric, app })
-                            .unwrap();
+                        {
+                            eprintln!("Error sending metric: {}", e);
+                            continue;
+                        }
                         if cfg.verbose {
                             match metric.operation.clone() {
                                 MetricOperation::Set => {
@@ -70,29 +76,92 @@ impl WorkerJob for HttpPropagator {
 
 #[cfg(test)]
 mod tests {
-    use super::Body;
+    use super::{Body, http};
     use crate::log::{LogLevel, LogMessage};
     use crate::metric::{MetricMessage, MetricOperation};
+    use crate::propagator::{Propagator, PropagatorConfig};
     use serde_json::{Value, json};
+    use std::io::{BufRead, BufReader, Read, Write};
+    use std::net::{TcpListener, TcpStream};
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
     use time::OffsetDateTime;
 
-    fn log_body(app: Option<&str>) -> Value {
-        let log = LogMessage {
+    fn log() -> LogMessage {
+        LogMessage {
             message: "Desktop app started".into(),
             level: LogLevel::Info,
             created_at: OffsetDateTime::UNIX_EPOCH,
             sequence_number: 0,
-        };
-        serde_json::to_value(Body { msg: &log, app }).unwrap()
+        }
     }
 
-    fn metric_body(app: Option<&str>) -> Value {
-        let metric = MetricMessage {
+    fn metric() -> MetricMessage {
+        MetricMessage {
             name: "users".into(),
             value: 1.0,
             operation: MetricOperation::Set,
-        };
-        serde_json::to_value(Body { msg: &metric, app }).unwrap()
+        }
+    }
+
+    fn log_body(app: Option<&str>) -> Value {
+        serde_json::to_value(Body { msg: &log(), app }).unwrap()
+    }
+
+    fn metric_body(app: Option<&str>) -> Value {
+        serde_json::to_value(Body {
+            msg: &metric(),
+            app,
+        })
+        .unwrap()
+    }
+
+    /// Reads one request and rejects it with 400, like the API does for a body it refuses.
+    /// Returns the request line.
+    fn reject(stream: TcpStream) -> String {
+        let mut reader = BufReader::new(&stream);
+        let mut request_line = String::new();
+        reader.read_line(&mut request_line).unwrap();
+        let mut content_length = 0;
+        let mut header = String::new();
+        while reader.read_line(&mut header).unwrap() > 2 {
+            if let Some(value) = header.to_ascii_lowercase().strip_prefix("content-length:") {
+                content_length = value.trim().parse().unwrap();
+            }
+            header.clear();
+        }
+        reader.read_exact(&mut vec![0; content_length]).unwrap();
+        (&stream)
+            .write_all(
+                b"HTTP/1.1 400 Bad Request\r\ncontent-length: 0\r\nconnection: close\r\n\r\n",
+            )
+            .unwrap();
+        request_line
+    }
+
+    #[test]
+    fn worker_keeps_sending_after_a_failed_request() {
+        let server = TcpListener::bind("127.0.0.1:0").unwrap();
+        let api_url = format!("http://{}", server.local_addr().unwrap());
+        let (requests, received) = mpsc::channel();
+        thread::spawn(move || {
+            for stream in server.incoming() {
+                requests.send(reject(stream.unwrap())).unwrap();
+            }
+        });
+
+        let worker = http(
+            PropagatorConfig::default()
+                .api_key("key".into())
+                .api_url(api_url),
+        );
+        worker.propagate_log(log());
+        worker.propagate_metric(metric());
+
+        let next_request = || received.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert!(next_request().starts_with("POST /logs "));
+        assert!(next_request().starts_with("PUT /metrics "));
     }
 
     #[test]
