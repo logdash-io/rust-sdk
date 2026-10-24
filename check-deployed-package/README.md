@@ -10,3 +10,4 @@ LOGDASH_API_KEY=<your-api-key> LOGDASH_PERSONAL_API_KEY=<your-personal-api-key> 
 The check sends them as the `rust-sdk` app on that domain.
 `LOGDASH_PERSONAL_API_KEY` reads them back: a personal API key with `logs:read` and `metrics:read`, restricted to that domain.
 Set `LOGDASH_VERSION` to check a version other than the newest.
+The check needs a version with `Config::app`: 1.1.0 or later.

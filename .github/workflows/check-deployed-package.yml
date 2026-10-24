@@ -8,11 +8,19 @@ on:
       version:
         type: string
         required: true
+    secrets:
+      LOGDASH_API_KEY:
+        required: true
+      LOGDASH_PERSONAL_API_KEY:
+        required: true
   workflow_dispatch:
     inputs:
       version:
         description: Version to check, the newest when empty
         type: string
+
+permissions:
+  contents: read
 
 jobs:
   check-deployed-package:

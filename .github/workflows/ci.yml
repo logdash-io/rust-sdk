@@ -102,6 +102,8 @@ jobs:
       V: ${{ needs.version.outputs.next }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false # keep the write token off disk while cargo publish runs build scripts
       - uses: dtolnay/rust-toolchain@stable
       # The version in Cargo.toml is a placeholder; the tags are the source of truth.
       - run: |
@@ -109,7 +111,8 @@ jobs:
           grep -qxF "version = \"$V\"" Cargo.toml
           cargo update --workspace
       # Dirty: Cargo.toml and Cargo.lock differ from the merge only in the version.
-      - run: cargo publish --allow-dirty
+      # Skipped when already published, so a rerun after a failed tag step just tags.
+      - run: curl -fsS https://index.crates.io/lo/gd/logdash | grep -qF "\"vers\":\"$V\"" || cargo publish --allow-dirty
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       # Last, since it creates the tag the next release counts commits from.
@@ -122,4 +125,6 @@ jobs:
     uses: ./.github/workflows/check-deployed-package.yml
     with:
       version: ${{ needs.version.outputs.next }}
-    secrets: inherit
+    secrets:
+      LOGDASH_API_KEY: ${{ secrets.LOGDASH_API_KEY }}
+      LOGDASH_PERSONAL_API_KEY: ${{ secrets.LOGDASH_PERSONAL_API_KEY }}
