@@ -1,4 +1,4 @@
-use crate::{log::LogMessage, metric::MetricMessage, propagator::Propagator};
+use crate::{event::EventMessage, log::LogMessage, metric::MetricMessage, propagator::Propagator};
 use std::fmt::Debug;
 use std::sync::{Arc, OnceLock};
 
@@ -33,5 +33,10 @@ impl Dispatch {
     #[inline]
     pub fn dispatch_metric(&self, msg: MetricMessage) {
         self.propagator.propagate_metric(msg);
+    }
+
+    #[inline]
+    pub fn dispatch_event(&self, msg: EventMessage) {
+        self.propagator.propagate_event(msg);
     }
 }

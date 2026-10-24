@@ -35,4 +35,8 @@ impl<T: WorkerJob + Send + Sync + 'static> Propagator for Worker<T> {
     fn propagate_metric(&self, msg: crate::metric::MetricMessage) {
         let _ = self.sender.send(MessageType::Metric(msg));
     }
+
+    fn propagate_event(&self, msg: crate::event::EventMessage) {
+        let _ = self.sender.send(MessageType::Event(msg));
+    }
 }

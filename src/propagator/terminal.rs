@@ -3,6 +3,7 @@ use super::{
     worker::{Worker, WorkerJob},
 };
 use owo_colors::OwoColorize;
+use serde_json::Value;
 use std::sync::mpsc::Receiver;
 
 pub struct TerminalPropagator {
@@ -81,6 +82,9 @@ impl WorkerJob for TerminalPropagator {
                             "Metric: {} = {} {}",
                             metric.name, metric.value, metric.operation
                         );
+                    }
+                    MessageType::Event(event) => {
+                        println!("Event: {} {}", event.name, Value::Object(event.props));
                     }
                 },
                 Err(e) => {

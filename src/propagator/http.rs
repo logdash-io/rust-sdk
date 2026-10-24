@@ -10,7 +10,7 @@ pub struct HttpPropagator {
     _priv: (),
 }
 
-/// JSON body of a log or metric, with the app that sent it when one is set.
+/// JSON body of a log, metric or event, with the app that sent it when one is set.
 #[derive(Serialize)]
 struct Body<'a, T> {
     #[serde(flatten)]
@@ -27,6 +27,7 @@ impl WorkerJob for HttpPropagator {
     fn job(cfg: PropagatorConfig, rx: Receiver<MessageType>) {
         let log_url = format!("{}/logs", cfg.api_url);
         let metric_url = format!("{}/metrics", cfg.api_url);
+        let event_url = format!("{}/events", cfg.api_url);
         let api_key = cfg.api_key.unwrap();
         let app = cfg.app.as_deref();
         loop {
@@ -62,6 +63,18 @@ impl WorkerJob for HttpPropagator {
                                     println!("Metric changed: {} = {}", metric.name, metric.value);
                                 }
                             }
+                        }
+                    }
+                    MessageType::Event(event) => {
+                        if let Err(e) = ureq::post(&event_url)
+                            .header("project-api-key", &api_key)
+                            .send_json(Body { msg: &event, app })
+                        {
+                            eprintln!("Error sending event: {}", e);
+                            continue;
+                        }
+                        if cfg.verbose {
+                            println!("Event sent: {}", event.name);
                         }
                     }
                 },

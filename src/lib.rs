@@ -1,7 +1,9 @@
 mod dispatch;
+mod event;
 mod log;
 mod metric;
 mod propagator;
+pub use event::{PropValue, track};
 pub use log::LogCollector;
 pub use metric::MetricCollector;
 use propagator::Propagator;
