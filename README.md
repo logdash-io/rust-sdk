@@ -17,7 +17,6 @@ cargo add logdash
 get API KEY from env LOGDASH_API_KEY
 
 ```rust
-
 let (logger, _) = logdash::create_logdash(logdash::Config::default());
 
 // Send an info log message
@@ -39,10 +38,10 @@ l.info("Rust SDK example with API key");
 let (_, metrics) = logdash::create_logdash(logdash::Config::default());
 
 // create a metric
-metrics.set("user".into(), 0.0)
+metrics.set("user".into(), 0.0);
 
 // or increment / decrement by
-metrics.mutate("user".into(), 1.0)
+metrics.mutate("user".into(), 1.0);
 ```
 
 get API KEY from config
@@ -51,11 +50,30 @@ get API KEY from config
 let (_, m) = logdash::create_logdash(logdash::Config::default().api_key("Your Api Key".into()));
 
 // create a metric
-m.set("user".into(), 0.0)
+m.set("user".into(), 0.0);
 
 // or increment / decrement by
-m.mutate("user".into(), 1.0)
+m.mutate("user".into(), 1.0);
 ```
+
+## Apps
+
+A domain key is shared by all apps of a domain, for example a desktop app, an API and a landing page.
+Set `app` to name this one, so the dashboard can filter logs and metrics by app.
+
+```rust
+let (logger, metrics) = logdash::create_logdash(
+    logdash::Config::default()
+        .api_key("Your Domain Key".into())
+        .app("desktop".into()),
+);
+
+// both are sent with "app": "desktop"
+logger.info("Desktop app started");
+metrics.set("users".into(), 1.0);
+```
+
+Older service keys ignore `app`.
 
 ## View
 
@@ -68,9 +86,10 @@ To see the logs or metrics, go to your project dashboard
 
 | Parameter | Required | Default | Description                                                                                                              |
 | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `apiKey`  | no       | -       | Api key used to authorize against logdash servers. If you don't provide one, logs will be logged into local console only |
-| `host`    | no       | -       | Custom API host, useful with self-hosted instances                                                                       |
+| `api_key` | no       | -       | Api key used to authorize against logdash servers. If you don't provide one, logs will be logged into local console only |
+| `api_url` | no       | -       | Custom API host, useful with self-hosted instances                                                                       |
 | `verbose` | no       | -       | Useful for debugging purposes                                                                                            |
+| `app`     | no       | -       | Name of the app sending logs and metrics, for example `desktop`. See [Apps](#apps)                                       |
 
 ## License
 

@@ -11,6 +11,7 @@ pub struct PropagatorConfig {
     pub(crate) api_key: Option<String>,
     api_url: String,
     verbose: bool,
+    app: Option<String>,
 }
 
 impl Default for PropagatorConfig {
@@ -19,6 +20,7 @@ impl Default for PropagatorConfig {
             api_key: std::env::var("LOGDASH_API_KEY").ok(),
             api_url: "https://api.logdash.io".to_string(),
             verbose: false,
+            app: None,
         }
     }
 }
@@ -35,6 +37,28 @@ impl PropagatorConfig {
 
     pub fn verbose(mut self, verbose: bool) -> Self {
         self.verbose = verbose;
+        self
+    }
+
+    /// Names the app that sends the logs and metrics, for example `desktop`, `api` or `landing`.
+    ///
+    /// A domain key is shared by all apps of a domain, and `app` names this one,
+    /// so the dashboard can filter logs and metrics by app.
+    /// Every log and metric sent with this config carries it.
+    /// Older service keys ignore `app`.
+    ///
+    /// ```no_run
+    /// let (logger, metrics) = logdash::create_logdash(
+    ///     logdash::Config::default()
+    ///         .api_key("Your Domain Key".into())
+    ///         .app("desktop".into()),
+    /// );
+    ///
+    /// logger.info("Desktop app started");
+    /// metrics.set("users".into(), 1.0);
+    /// ```
+    pub fn app(mut self, app: String) -> Self {
+        self.app = Some(app);
         self
     }
     #[inline]
