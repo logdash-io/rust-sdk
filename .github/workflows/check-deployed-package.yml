@@ -1,31 +1,44 @@
 name: Check deployed package
 
+# Builds a program against logdash from crates.io, sends logs and metrics with it, and reads them back.
+# CI runs it after each release; run it by hand on any branch to check the newest version or the one you name.
 on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
   workflow_dispatch:
-  workflow_run:
-    workflows: ['Release-plz']
-    types:
-      - completed
-    branches:
-      - main
+    inputs:
+      version:
+        description: Version to check, the newest when empty
+        type: string
 
 jobs:
   check-deployed-package:
     name: Check deployed package
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
-      - name: Wait for package to propagate
-        run: sleep 60
-
-      - name: Make run script executable
-        run: chmod +x check-deployed-package/run.sh
+      # cargo reads the sparse index, which the CDN caches for up to 10 minutes.
+      - name: Wait until crates.io serves the version
+        if: inputs.version != ''
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          for _ in $(seq 60); do
+            curl -fsS https://index.crates.io/lo/gd/logdash | grep -qF "\"vers\":\"$V\"" && exit 0
+            sleep 10
+          done
+          echo "::error::crates.io does not serve logdash $V after 10 minutes"
+          exit 1
 
       - name: Check deployed package
         env:
+          LOGDASH_VERSION: ${{ inputs.version }}
           LOGDASH_API_KEY: ${{ secrets.LOGDASH_API_KEY }}
+          LOGDASH_PERSONAL_API_KEY: ${{ secrets.LOGDASH_PERSONAL_API_KEY }}
         run: ./check-deployed-package/run.sh
