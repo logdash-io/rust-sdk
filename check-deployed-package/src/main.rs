@@ -9,16 +9,15 @@ fn main() {
     let logs_seed = env::var("LOGS_SEED").unwrap_or_else(|_| "default".to_string());
     let metrics_seed = env::var("METRICS_SEED").unwrap_or_else(|_| "1".to_string());
     
-    println!("Using API Key: {:?}", api_key);
     println!("Using Logs Seed: {}", logs_seed);
     println!("Using Metrics Seed: {}", metrics_seed);
 
-    // Create logdash instance
-    let (logger, metrics) = if let Some(key) = api_key {
-        logdash::create_logdash(logdash::Config::default().api_key(key))
-    } else {
-        logdash::create_logdash(logdash::Config::default())
-    };
+    // Each SDK sends as its own app on the shared smoke-test domain
+    let config = logdash::Config::default().app("rust-sdk".to_string());
+    let (logger, metrics) = logdash::create_logdash(match api_key {
+        Some(key) => config.api_key(key),
+        None => config,
+    });
 
     // Log messages with seed appended
     logger.info(&format!("This is an info log {}", logs_seed));
